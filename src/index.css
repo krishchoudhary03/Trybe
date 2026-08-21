@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Colors ── */
+  --color-secondary-container: #842836;
+  --color-on-secondary-container: #ff9da5;
+  --color-error-container: #93000a;
+  --color-primary: #ffb2b9;
+  --color-tertiary: #cbc5c5;
+  --color-inverse-surface: #e7e2dc;
+  --color-surface-tint: #ffb2b9;
+  --color-on-secondary-fixed-variant: #812634;
+  --color-on-error-container: #ffdad6;
+  --color-on-primary-fixed-variant: #6f353c;
+  --color-on-secondary: #620d1f;
+  --color-surface-container: #211f1c;
+  --color-background: #141310;
+  --color-on-tertiary: #323030;
+  --color-outline-variant: #524344;
+  --color-primary-container: #7d4047;
+  --color-on-primary: #541f26;
+  --color-surface: #141310;
+  --color-surface-container-low: #1d1b18;
+  --color-on-primary-container: #ffb2b8;
+  --color-on-background: #e7e2dc;
+  --color-primary-fixed: #ffdadc;
+  --color-tertiary-fixed: #e7e1e1;
+  --color-primary-fixed-dim: #ffb2b9;
+  --color-tertiary-container: #555252;
+  --color-surface-container-lowest: #0f0e0b;
+  --color-secondary: #ffb2b7;
+  --color-outline: #9f8c8d;
+  --color-surface-dim: #141310;
+  --color-on-surface-variant: #d7c1c2;
+  --color-error: #ffb4ab;
+  --color-on-surface: #e7e2dc;
+  --color-inverse-on-surface: #32302c;
+  --color-on-secondary-fixed: #40000e;
+  --color-on-tertiary-fixed: #1d1b1b;
+  --color-surface-variant: #363531;
+  --color-tertiary-fixed-dim: #cbc5c5;
+  --color-secondary-fixed: #ffdadb;
+  --color-on-error: #690005;
+  --color-surface-container-high: #2b2a26;
+  --color-on-tertiary-fixed-variant: #494646;
+  --color-secondary-fixed-dim: #ffb2b7;
+  --color-surface-bright: #3b3935;
+  --color-on-tertiary-container: #cbc5c5;
+  --color-surface-container-highest: #363531;
+  --color-inverse-primary: #8b4c53;
+  --color-on-primary-fixed: #390a13;
+
+  /* ── Dedicated Layout Tokens ── */
+  --spacing-margin-mobile: 20px;
+  --spacing-margin-desktop: 40px;
+  --spacing-gutter: 16px;
+
+  /* ── Typography ── */
+  --font-size-headline-xl: 2.5rem;
+  --font-size-headline-lg: 2rem;
+  --font-size-headline-md: 1.5rem;
+  --font-size-headline-sm: 1.25rem;
+  --font-size-label-lg: 1rem;
+  --font-size-label-md: 0.875rem;
+  --font-size-label-sm: 0.75rem;
+  --font-size-body-lg: 1.125rem;
+  --font-size-body-md: 1rem;
+  --font-size-body-sm: 0.875rem;
+
+  --font-family-headline-xl: 'Inter', sans-serif;
+  --font-family-headline-lg: 'Inter', sans-serif;
+  --font-family-headline-md: 'Inter', sans-serif;
+  --font-family-headline-sm: 'Inter', sans-serif;
+  --font-family-label-lg: 'Inter', sans-serif;
+  --font-family-label-md: 'Inter', sans-serif;
+  --font-family-label-sm: 'Inter', sans-serif;
+  --font-family-body-lg: 'Inter', sans-serif;
+  --font-family-body-md: 'Inter', sans-serif;
+  --font-family-body-sm: 'Inter', sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-surface);
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* ── Custom Named Spacing Utilities (xs: 8px, sm: 12px, md: 16px, lg: 24px, xl: 32px) ── */
+@utility p-xs { padding: 8px; }
+@utility px-xs { padding-left: 8px; padding-right: 8px; }
+@utility py-xs { padding-top: 8px; padding-bottom: 8px; }
+@utility m-xs { margin: 8px; }
+@utility mx-xs { margin-left: 8px; margin-right: 8px; }
+@utility my-xs { margin-top: 8px; margin-bottom: 8px; }
+@utility mt-xs { margin-top: 8px; }
+@utility mb-xs { margin-bottom: 8px; }
+@utility ml-xs { margin-left: 8px; }
+@utility mr-xs { margin-right: 8px; }
+@utility gap-xs { gap: 8px; }
+
+@utility p-sm { padding: 12px; }
+@utility px-sm { padding-left: 12px; padding-right: 12px; }
+@utility py-sm { padding-top: 12px; padding-bottom: 12px; }
+@utility m-sm { margin: 12px; }
+@utility mx-sm { margin-left: 12px; margin-right: 12px; }
+@utility my-sm { margin-top: 12px; margin-bottom: 12px; }
+@utility mt-sm { margin-top: 12px; }
+@utility mb-sm { margin-bottom: 12px; }
+@utility ml-sm { margin-left: 12px; }
+@utility mr-sm { margin-right: 12px; }
+@utility gap-sm { gap: 12px; }
+
+@utility p-md { padding: 16px; }
+@utility px-md { padding-left: 16px; padding-right: 16px; }
+@utility py-md { padding-top: 16px; padding-bottom: 16px; }
+@utility m-md { margin: 16px; }
+@utility mx-md { margin-left: 16px; margin-right: 16px; }
+@utility my-md { margin-top: 16px; margin-bottom: 16px; }
+@utility mt-md { margin-top: 16px; }
+@utility mb-md { margin-bottom: 16px; }
+@utility ml-md { margin-left: 16px; }
+@utility mr-md { margin-right: 16px; }
+@utility gap-md { gap: 16px; }
+
+@utility p-lg { padding: 24px; }
+@utility px-lg { padding-left: 24px; padding-right: 24px; }
+@utility py-lg { padding-top: 24px; padding-bottom: 24px; }
+@utility m-lg { margin: 24px; }
+@utility mx-lg { margin-left: 24px; margin-right: 24px; }
+@utility my-lg { margin-top: 24px; margin-bottom: 24px; }
+@utility mt-lg { margin-top: 24px; }
+@utility mb-lg { margin-bottom: 24px; }
+@utility ml-lg { margin-left: 24px; }
+@utility mr-lg { margin-right: 24px; }
+@utility gap-lg { gap: 24px; }
+
+@utility p-xl { padding: 32px; }
+@utility px-xl { padding-left: 32px; padding-right: 32px; }
+@utility py-xl { padding-top: 32px; padding-bottom: 32px; }
+@utility m-xl { margin: 32px; }
+@utility mx-xl { margin-left: 32px; margin-right: 32px; }
+@utility my-xl { margin-top: 32px; margin-bottom: 32px; }
+@utility mt-xl { margin-top: 32px; }
+@utility mb-xl { margin-bottom: 32px; }
+@utility ml-xl { margin-left: 32px; }
+@utility mr-xl { margin-right: 32px; }
+@utility gap-xl { gap: 32px; }
+
+/* ── Modal Sizing Tokens and Custom Modal Utilities ── */
+@utility max-w-modal-sm { max-width: 440px; }
+@utility max-w-modal-md { max-width: 540px; }
+@utility max-w-modal-lg { max-width: 720px; }
+@utility max-w-modal-xl { max-width: 900px; }
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.glow-accent {
+  box-shadow: 0 0 25px rgba(125, 64, 71, 0.4);
+}
+.glow-effect {
+  box-shadow: 0 0 30px rgba(125, 64, 71, 0.4);
+}
+.glow-hover:hover {
+  box-shadow: 0 0 20px rgba(125, 64, 71, 0.3);
+  border-color: var(--color-primary-container);
+}
+.grid-bg {
+  background-size: 40px 40px;
+  background-image: 
+      linear-gradient(to right, rgba(82, 67, 68, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(82, 67, 68, 0.1) 1px, transparent 1px);
+}
+.glass-panel {
+  background: rgba(28, 26, 26, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--color-outline-variant);
+}
+
+/* Remove default browser eye icon for password fields */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear,
+input[type="password"]::-webkit-credentials-auto-fill-button {
+  display: none !important;
+}
