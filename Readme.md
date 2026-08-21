@@ -2,7 +2,7 @@
 
 > A modern, full-featured social platform for college communities — clubs, events, discussions, feeds, and messaging, all in one place.
 
-[![CI/CD](https://github.com/krishchoudhary03/Trybe/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/USERNAME/REPO/actions/workflows/ci-cd.yml)
+[![CI/CD](https://github.com/krishchoudhary03/Trybe/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/krishchoudhary03/Trybe/actions/workflows/ci-cd.yml)
 [![Deployed on GitHub Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-blue)](#)
 [![License](https://img.shields.io/badge/license-MIT-green)](#license)
 [![Made with React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](#tech-stack)
