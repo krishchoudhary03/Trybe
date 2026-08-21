@@ -1,4 +1,4 @@
-# 🎓 CampusConnect
+# 🎓TryBe
 
 > **A modern college social & community platform — built to bring campus life into one place.**
 
@@ -24,7 +24,7 @@ Discover colleges, join clubs, explore events, share updates, discuss ideas, con
 
 **CampusConnect** is a single-page application designed around the everyday needs of college students.
 
-Instead of scattering campus life across WhatsApp groups, Instagram pages, college websites, and separate communities, CampusConnect brings the experience together through a unified platform.
+Instead of scattering campus life across WhatsApp groups, Instagram pages, college websites, and separate communities,TryBe brings the experience together through a unified platform.
 
 ### The platform combines
 
