@@ -1,196 +1,280 @@
-# 🎓 CampusConnect — College Social & Community Platform
+# 🎓 CampusConnect
 
-> A modern, full-featured social platform for college communities — clubs, events, discussions, feeds, and messaging, all in one place.
+> **A modern college social & community platform — built to bring campus life into one place.**
 
-[![CI/CD](https://github.com/krishchoudhary03/Trybe/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/krishchoudhary03/Trybe/actions/workflows/ci-cd.yml)
-[![Deployed on GitHub Pages](https://img.shields.io/badge/deployed-GitHub%20Pages-blue)](#)
-[![License](https://img.shields.io/badge/license-MIT-green)](#license)
-[![Made with React](https://img.shields.io/badge/React-18-61DAFB?logo=react)](#tech-stack)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript)](#tech-stack)
-[![Vite](https://img.shields.io/badge/Vite-Build-646CFF?logo=vite)](#tech-stack)
+Discover colleges, join clubs, explore events, share updates, discuss ideas, connect with people, and manage your campus presence — all from a single, focused experience.
 
----
+<br />
 
-## 📖 Table of Contents
+<div align="center">
 
-- [Overview](#-overview)
-- [Core Features](#-core-features)
-- [Architecture](#-architecture)
-  - [High-Level System Design](#high-level-system-design)
-  - [Application Layer Breakdown](#application-layer-breakdown)
-  - [State & Data Orchestration](#state--data-orchestration)
-  - [Component Architecture](#component-architecture)
-  - [Data Model](#data-model)
-- [Folder Structure](#-folder-structure)
-- [Tech Stack](#-tech-stack)
-- [Getting Started](#-getting-started)
-- [Available Scripts](#-available-scripts)
-- [CI/CD Pipeline](#-cicd-pipeline)
-- [Deployment](#-deployment)
-- [Environment & Configuration](#-environment--configuration)
-- [Contributing](#-contributing)
-- [Security](#-security)
-- [License](#-license)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge\&logo=react\&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge\&logo=typescript\&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge\&logo=vite\&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge\&logo=githubactions\&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge)
+
+</div>
+
+<br />
 
 ---
 
-## 🌟 Overview
+## ✦ Overview
 
-**CampusConnect** is a single-page application (SPA) built for college students to discover, join, and engage with their campus community. It brings together **club management**, **event discovery**, **social feeds**, **discussions**, **direct messaging**, and **notifications** into one cohesive, mobile-first experience — inspired by modern social product design principles (see `apple-design.md` for the design philosophy this project follows).
+**CampusConnect** is a single-page application designed around the everyday needs of college students.
 
-The application is architected around a **context-driven, component-orchestrated React frontend**, with a clean separation between:
+Instead of scattering campus life across WhatsApp groups, Instagram pages, college websites, and separate communities, CampusConnect brings the experience together through a unified platform.
 
-- **Presentation layer** (pages & components)
-- **Domain/data layer** (typed data models)
-- **Global orchestration layer** (React Context + routing)
+### The platform combines
+
+* 🏫 College discovery
+* 🎭 Clubs & communities
+* 📅 Events & RSVPs
+* 📰 Campus social feed
+* 💬 Discussions
+* ✉️ Direct messaging
+* 🔔 Notifications
+* 👤 Profiles
+* 🔍 People, projects & college discovery
+* ⚙️ Account & support tools
+
+The frontend follows a **context-driven, component-oriented React architecture** with a clear separation between presentation, application state, and domain data.
 
 ---
 
 ## ✨ Core Features
 
-| Module | Description |
-|---|---|
-| 🏫 **College Explore** | Discover colleges, browse their public profile (About, Feed, Clubs, Events, Discussions tabs) |
-| 🎭 **Clubs** | Browse, join, and manage clubs; dedicated **Club Dashboard** for club admins |
-| 📅 **Events** | Campus-wide and club-specific event listings with RSVP flows |
-| 📰 **Home Feed** | Personalized, algorithmic-style social feed of campus activity |
-| 💬 **Discussions** | Threaded, forum-style discussions scoped to a college/club |
-| ✉️ **Messages** | Real-time-style direct messaging between users |
-| 🔔 **Notifications** | Centralized notification center for social & platform events |
-| 👤 **Profile & My College** | User profile management and personalized college dashboard |
-| 🔍 **Discover** | Cross-platform discovery surface (people, colleges, clubs, projects) |
-| 🧭 **Onboarding & Auth** | Guided onboarding, Signup/Login flows, Welcome screen |
-| ⚙️ **Settings, Help, Legal, Contact** | Standard account & support surfaces |
+| Feature                   | What it does                                        |
+| :------------------------ | :-------------------------------------------------- |
+| 🏫 **College Explore**    | Discover colleges and explore their public profiles |
+| 🎭 **Clubs**              | Browse, join, and manage college clubs              |
+| 📅 **Events**             | Discover campus and club events with RSVP flows     |
+| 📰 **Home Feed**          | View a personalized stream of campus activity       |
+| 💬 **Discussions**        | Participate in college and club discussions         |
+| ✉️ **Messages**           | Direct messaging between users                      |
+| 🔔 **Notifications**      | Centralized social and platform notifications       |
+| 👤 **Profile**            | Manage your identity and college presence           |
+| 🔍 **Discover**           | Find people, colleges, clubs, and projects          |
+| 🧭 **Onboarding**         | Guided signup, login, and onboarding experience     |
+| ⚙️ **Settings & Support** | Settings, help, legal, and contact surfaces         |
 
 ---
 
-## 🏗️ Architecture
+# 🏗️ Architecture
 
-### High-Level System Design
+CampusConnect uses a **layered SPA architecture**.
 
-The application follows a **layered SPA architecture** with a central **orchestrator (`App.tsx`)** that owns routing, and a **global context (`AppContext.tsx`)** that owns shared application state — acting as the single source of truth consumed across all pages and components.
+At the center is `App.tsx`, which orchestrates routing and page composition, while `AppContext.tsx` provides shared application state.
 
+```text
+                         ┌─────────────────────┐
+                         │      Browser        │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │     index.html      │
+                         │       Entry         │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │     main.tsx        │
+                         │      Bootstrap      │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │            App.tsx            │
+                    │         Orchestrator          │
+                    │                               │
+                    │  • Routing                    │
+                    │  • Layout                     │
+                    │  • Page composition            │
+                    └───────────────┬───────────────┘
+                                    │
+                 ┌──────────────────┴──────────────────┐
+                 │                                     │
+                 ▼                                     ▼
+       ┌─────────────────────┐              ┌─────────────────────┐
+       │   AppContext.tsx    │              │     Pages Layer     │
+       │    Global State     │              │   src/pages/*.tsx   │
+       │                     │              │                     │
+       │ • currentUser       │              │ • Home              │
+       │ • activeCollege     │              │ • Discover           │
+       │ • notifications     │              │ • Clubs              │
+       │ • messages          │              │ • Messages           │
+       │ • UI state          │              │ • Profile             │
+       └──────────┬──────────┘              └──────────┬──────────┘
+                  │                                    │
+                  └────────────────┬───────────────────┘
+                                   │
+                                   ▼
+                     ┌──────────────────────────┐
+                     │   Feature Components     │
+                     │                          │
+                     │ • FeedTab                │
+                     │ • ClubsTab               │
+                     │ • EventsTab              │
+                     │ • DiscussionsTab         │
+                     │ • AboutTab               │
+                     │ • RightSidebar           │
+                     │ • Modal                  │
+                     └────────────┬─────────────┘
+                                  │
+                                  ▼
+                     ┌──────────────────────────┐
+                     │      Domain / Data       │
+                     │      src/data/*.ts       │
+                     │                          │
+                     │ • colleges               │
+                     │ • clubs                  │
+                     │ • events                 │
+                     │ • people                 │
+                     │ • projects               │
+                     │ • shared types           │
+                     └──────────────────────────┘
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                         BROWSER (Client)                         │
-│                                                                    │
-│   ┌────────────────────────────────────────────────────────┐     │
-│   │                     index.html (Entry)                  │     │
-│   └───────────────────────────┬──────────────────────────────┘     │
-│                                │                                    │
-│   ┌───────────────────────────▼──────────────────────────────┐     │
-│   │                    src/main.tsx (Bootstrap)               │     │
-│   │   - Mounts React root                                     │     │
-│   │   - Wraps app in Providers (Context, Router)               │     │
-│   └───────────────────────────┬──────────────────────────────┘     │
-│                                │                                    │
-│   ┌───────────────────────────▼──────────────────────────────┐     │
-│   │              src/App.tsx  ── ORCHESTRATOR ──               │     │
-│   │   - Route table / navigation orchestration                 │     │
-│   │   - Layout composition (src/components/Layout.tsx)         │     │
-│   │   - Wraps pages with AppContext.Provider                   │     │
-│   └───────┬───────────────────────────────────────┬───────────┘     │
-│           │                                        │                 │
-│   ┌───────▼────────────┐                 ┌─────────▼──────────┐     │
-│   │   AppContext.tsx    │◄───────────────►│      Pages Layer    │     │
-│   │  (Global Store)      │   read/write    │  (src/pages/*.tsx)  │     │
-│   │  - user session       │   state         │  Home, Discover,   │     │
-│   │  - active college     │                 │  Clubs, Messages,  │     │
-│   │  - notifications      │                 │  Profile, etc.     │     │
-│   │  - UI/global flags    │                 └─────────┬───────────┘     │
-│   └───────────────────────┘                           │                 │
-│                                                        │                 │
-│                                     ┌──────────────────▼──────────────┐  │
-│                                     │      Feature Components          │  │
-│                                     │  (src/components/college/*)      │  │
-│                                     │  FeedTab, ClubsTab, EventsTab,   │  │
-│                                     │  DiscussionsTab, AboutTab,       │  │
-│                                     │  RightSidebar, Modal              │  │
-│                                     └──────────────────┬──────────────┘  │
-│                                                        │                 │
-│                                     ┌──────────────────▼──────────────┐  │
-│                                     │        Data / Domain Layer       │  │
-│                                     │        (src/data/*.ts)           │  │
-│                                     │  colleges, clubs, events,        │  │
-│                                     │  people, projects, types.ts      │  │
-│                                     │  (typed models — single source   │  │
-│                                     │   of truth for shape of data)    │  │
-│                                     └───────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-### Application Layer Breakdown
-
-| Layer | Responsibility | Key Files |
-|---|---|---|
-| **Bootstrap** | Mounts the React tree, sets up global providers | `src/main.tsx` |
-| **Orchestrator** | Owns routing, global layout, page composition | `src/App.tsx`, `src/components/Layout.tsx` |
-| **Global State** | Cross-cutting app state, shared across every page | `src/context/AppContext.tsx` |
-| **Pages** | Route-level screens, one per URL/view | `src/pages/*.tsx` |
-| **Feature Components** | Reusable, composable UI blocks scoped to a domain (e.g., a College) | `src/components/college/*.tsx`, `src/components/Modal.tsx` |
-| **Data/Domain** | Static/typed data models representing core entities | `src/data/*.ts` |
-| **Styling** | Global design tokens & utility styles | `src/index.css`, `apple-design.md` |
-
-### State & Data Orchestration
-
-The **`AppContext.tsx`** acts as the app's lightweight orchestrator/state machine using React's Context + Hooks pattern (no external state library required at this scale):
-
-```
-                     ┌────────────────────────────┐
-                     │      AppContext Provider     │
-                     │ ─────────────────────────── │
-                     │  • currentUser                │
-                     │  • activeCollege              │
-                     │  • notifications[]             │
-                     │  • messages[]                  │
-                     │  • ui state (modals, tabs)      │
-                     └───────────┬───────────────────┘
-                                 │ useContext(AppContext)
-        ┌────────────────────────┼────────────────────────┐
-        │                        │                         │
- ┌──────▼──────┐        ┌────────▼────────┐       ┌────────▼────────┐
- │  HomeFeed    │        │  CollegeExplore   │       │    Messages      │
- │  Discover    │        │  ├─ AboutTab       │       │    Notifications │
- │  Clubs       │        │  ├─ FeedTab        │       │    Profile       │
- │  Work        │        │  ├─ ClubsTab       │       └──────────────────┘
- └──────────────┘        │  ├─ EventsTab      │
-                          │  └─ DiscussionsTab  │
-                          └──────────────────────┘
-```
-
-**Data flow principle:** Pages/components **read** from context via `useContext`/custom hooks and **dispatch** updates through context-exposed action functions — keeping mutation logic centralized and predictable, similar to a mini Flux pattern without the Redux boilerplate.
-
-### Component Architecture
-
-- **Container/Tab pattern**: `CollegeExplore.tsx` acts as a container page that renders tab-based feature components (`AboutTab`, `FeedTab`, `ClubsTab`, `EventsTab`, `DiscussionsTab`) — each tab is independently responsible for its own slice of UI, but reads shared state from context.
-- **Composable primitives**: `Modal.tsx` and `RightSidebar.tsx` are reusable UI primitives shared across multiple pages.
-- **Dashboard pattern**: `ClubDashboard.tsx` is a role-scoped page (club admins) separate from the public `Clubs.tsx` listing page — enforcing a clear separation between public and management views.
-
-### Data Model
-
-All domain entities are strongly typed via `src/data/types.ts`, with static/mock data seeded in dedicated files:
-
-```
-types.ts        →  Shared TypeScript interfaces (College, Club, Event, Person, Project, ...)
-colleges.ts      →  College entity data
-clubs.ts          →  Club entity data
-events.ts          →  Event entity data
-people.ts           →  User/People entity data
-projects.ts           →  Project/portfolio entity data
-```
-
-This keeps the **domain model decoupled from UI**, so swapping mock data for a real API/backend later only requires changing the data layer — pages and components remain untouched.
 
 ---
 
-## 📁 Folder Structure
+## 🧩 Application Layers
 
+| Layer             | Responsibility                    | Main files                   |
+| :---------------- | :-------------------------------- | :--------------------------- |
+| **Bootstrap**     | Initializes the React application | `src/main.tsx`               |
+| **Orchestrator**  | Routing, layout, page composition | `src/App.tsx`                |
+| **Global State**  | Shared application state          | `src/context/AppContext.tsx` |
+| **Pages**         | Route-level screens               | `src/pages/*.tsx`            |
+| **Components**    | Reusable feature UI               | `src/components/`            |
+| **Domain / Data** | Typed application entities        | `src/data/*.ts`              |
+| **Styling**       | Global styles & design system     | `src/index.css`              |
+
+---
+
+## 🔄 State & Data Flow
+
+`AppContext.tsx` acts as the application's lightweight state orchestrator using **React Context + Hooks**.
+
+```text
+                    AppContext Provider
+                           │
+                           │ useContext()
+                           ▼
+        ┌──────────────────────────────────────┐
+        │                                      │
+        ▼                                      ▼
+   Home / Discover                       College Explore
+   Clubs / Work                         ├── About
+                                        ├── Feed
+                                        ├── Clubs
+                                        ├── Events
+                                        └── Discussions
+        │                                      │
+        └──────────────────┬───────────────────┘
+                           │
+                           ▼
+                     Shared Actions
+                           │
+                           ▼
+                  Centralized State
 ```
+
+### Design principle
+
+Pages and components **read state from context** and trigger updates through context-provided actions.
+
+This keeps mutation logic centralized and provides a predictable data flow without introducing a heavier state-management library.
+
+---
+
+# 🧱 Component Architecture
+
+CampusConnect follows a few simple architectural patterns.
+
+### Container + Tabs
+
+`CollegeExplore.tsx` works as the container while individual tabs own their respective UI responsibilities:
+
+```text
+CollegeExplore
+├── AboutTab
+├── FeedTab
+├── ClubsTab
+├── EventsTab
+└── DiscussionsTab
+```
+
+### Reusable Components
+
+Common UI elements are extracted into reusable components:
+
+```text
+components/
+├── Layout.tsx
+├── Modal.tsx
+└── college/
+    ├── AboutTab.tsx
+    ├── ClubsTab.tsx
+    ├── DiscussionsTab.tsx
+    ├── EventsTab.tsx
+    ├── FeedTab.tsx
+    └── RightSidebar.tsx
+```
+
+### Role-Based Dashboard
+
+The public club discovery experience and club management experience are separated:
+
+```text
+Clubs.tsx
+    │
+    └── Public club discovery
+
+ClubDashboard.tsx
+    │
+    └── Club administration
+```
+
+---
+
+# 🗂️ Data Model
+
+The domain layer keeps the application's entities strongly typed.
+
+```text
+src/data/
+
+types.ts
+   │
+   ├── College
+   ├── Club
+   ├── Event
+   ├── Person
+   └── Project
+
+colleges.ts
+clubs.ts
+events.ts
+people.ts
+projects.ts
+```
+
+This keeps domain data independent from the UI.
+
+As a result, mock/static data can later be replaced with a real API or backend without requiring major changes to pages and components.
+
+---
+
+# 📁 Project Structure
+
+```text
 .
 ├── .github/
 │   └── workflows/
-│       └── ci-cd.yml          # CI/CD pipeline (lint, build, deploy)
-├── dist/                       # Production build output (generated)
+│       └── ci-cd.yml
+│
 ├── src/
 │   ├── components/
 │   │   ├── college/
@@ -202,8 +286,10 @@ This keeps the **domain model decoupled from UI**, so swapping mock data for a r
 │   │   │   └── RightSidebar.tsx
 │   │   ├── Layout.tsx
 │   │   └── Modal.tsx
+│   │
 │   ├── context/
-│   │   └── AppContext.tsx      # Global state orchestrator
+│   │   └── AppContext.tsx
+│   │
 │   ├── data/
 │   │   ├── clubs.ts
 │   │   ├── colleges.ts
@@ -211,6 +297,7 @@ This keeps the **domain model decoupled from UI**, so swapping mock data for a r
 │   │   ├── people.ts
 │   │   ├── projects.ts
 │   │   └── types.ts
+│   │
 │   ├── pages/
 │   │   ├── ClubDashboard.tsx
 │   │   ├── Clubs.tsx
@@ -230,11 +317,13 @@ This keeps the **domain model decoupled from UI**, so swapping mock data for a r
 │   │   ├── Signup.tsx
 │   │   ├── Welcome.tsx
 │   │   └── Work.tsx
-│   ├── App.tsx                  # Route orchestrator
-│   ├── main.tsx                 # App bootstrap/entry
-│   └── index.css                # Global styles
-├── apple-design.md              # Design system philosophy
-├── index.html                   # HTML entry point
+│   │
+│   ├── App.tsx
+│   ├── main.tsx
+│   └── index.css
+│
+├── apple-design.md
+├── index.html
 ├── metadata.json
 ├── SECURITY.md
 └── README.md
@@ -242,151 +331,235 @@ This keeps the **domain model decoupled from UI**, so swapping mock data for a r
 
 ---
 
-## 🛠️ Tech Stack
+# 🛠️ Tech Stack
 
-| Category | Technology |
-|---|---|
-| **Framework** | React 18 |
-| **Language** | TypeScript |
-| **Build Tool** | Vite |
-| **Styling** | CSS (custom design system — see `apple-design.md`) |
-| **State Management** | React Context API + Hooks |
-| **Routing** | React Router (via `App.tsx` orchestration) |
-| **CI/CD** | GitHub Actions |
-| **Hosting** | GitHub Pages |
+<div align="center">
+
+| Layer          | Technology               |
+| :------------- | :----------------------- |
+| **Frontend**   | React 18                 |
+| **Language**   | TypeScript               |
+| **Build Tool** | Vite                     |
+| **Styling**    | Custom CSS Design System |
+| **State**      | React Context + Hooks    |
+| **Routing**    | React Router             |
+| **CI/CD**      | GitHub Actions           |
+| **Hosting**    | GitHub Pages             |
+
+</div>
 
 ---
 
-## 🚀 Getting Started
+# 🚀 Getting Started
 
-### Prerequisites
+## Prerequisites
 
-- **Node.js** ≥ 18.x
-- **npm** ≥ 9.x (or `yarn` / `pnpm`)
+Make sure you have:
 
-### Installation
+* **Node.js** `18.x` or higher
+* **npm** `9.x` or higher
+
+You can also use `yarn` or `pnpm`.
+
+---
+
+## Installation
 
 ```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/USERNAME/REPO.git
+
+# Enter the project
 cd REPO
 
-# 2. Install dependencies
+# Install dependencies
 npm install
 
-# 3. Start the dev server
+# Start development server
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173` (Vite default).
+The development server will be available at:
 
----
-
-## 📜 Available Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Starts the local development server with hot-reload |
-| `npm run build` | Type-checks and builds the app for production into `dist/` |
-| `npm run preview` | Serves the production build locally for a final check |
-| `npm run lint` | Runs static analysis / linting across the codebase |
-
----
-
-## 🔄 CI/CD Pipeline
-
-This project ships with a **GitHub Actions** workflow (`.github/workflows/ci-cd.yml`) that automates quality checks and deployment on every push.
-
-### Pipeline Stages
-
-```
- push / PR to main
-        │
-        ▼
-┌───────────────────┐
-│   1. Checkout       │  actions/checkout
-└─────────┬───────────┘
-          ▼
-┌───────────────────┐
-│  2. Setup Node       │  actions/setup-node + npm cache
-└─────────┬───────────┘
-          ▼
-┌───────────────────┐
-│  3. Install deps     │  npm ci
-└─────────┬───────────┘
-          ▼
-┌───────────────────┐
-│  4. Lint (optional)  │  npm run lint
-└─────────┬───────────┘
-          ▼
-┌───────────────────┐
-│  5. Build            │  npm run build → dist/
-└─────────┬───────────┘
-          ▼
-   ┌──────┴───────┐
-   │  on: main only │
-   ▼
-┌───────────────────┐
-│  6. Deploy           │  Upload dist/ → GitHub Pages
-└───────────────────┘
+```text
+http://localhost:5173
 ```
 
-- **On every push/PR** → install, lint, and build are run to catch errors early (fast feedback loop).
-- **On push to `main` only** → the build artifact (`dist/`) is deployed automatically to **GitHub Pages**.
-- Uses **caching** for `node_modules`/npm to keep pipeline runs fast.
-- Uses the official `actions/deploy-pages` action — no manual `gh-pages` branch management needed.
+---
 
-> See the full workflow file at [`.github/workflows/ci-cd.yml`](.github/workflows/ci-cd.yml)
+# 📜 Available Scripts
+
+| Command           | Purpose                                |
+| :---------------- | :------------------------------------- |
+| `npm run dev`     | Start the development server           |
+| `npm run build`   | Type-check and create production build |
+| `npm run preview` | Preview the production build           |
+| `npm run lint`    | Run static analysis                    |
 
 ---
 
-## 🌐 Deployment
+# 🔄 CI/CD
 
-This project auto-deploys to **GitHub Pages** via the CI/CD pipeline above.
+CampusConnect uses **GitHub Actions** to automate quality checks and deployment.
 
-**One-time repo setup required:**
-1. Go to your repo → **Settings → Pages**
-2. Under **Build and deployment → Source**, select **GitHub Actions**
-3. Push to `main` — the pipeline will build and deploy automatically
-4. Your app will be live at: `https://<username>.github.io/<repo-name>/`
-
-> ⚠️ If deploying to a subpath (project pages, not a custom domain), make sure `vite.config.ts` has the correct `base` path set, e.g. `base: '/REPO-NAME/'`.
-
----
-
-## ⚙️ Environment & Configuration
-
-If/when this project connects to real backend services, environment variables should be defined in a `.env` file (never committed) and referenced via `import.meta.env.VITE_*`. A `.env.example` should be maintained for onboarding new contributors.
-
+```text
+              Push / Pull Request
+                       │
+                       ▼
+              ┌─────────────────┐
+              │     Checkout    │
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │   Setup Node    │
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │  Install deps   │
+              │     npm ci       │
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │      Lint       │
+              └────────┬────────┘
+                       ▼
+              ┌─────────────────┐
+              │      Build      │
+              │   npm run build │
+              └────────┬────────┘
+                       │
+                 main branch
+                       │
+                       ▼
+              ┌─────────────────┐
+              │  GitHub Pages   │
+              │    Deployment   │
+              └─────────────────┘
 ```
+
+### Pipeline behavior
+
+* Every push/PR runs dependency installation, linting, and build checks.
+* Pushes to `main` trigger production deployment.
+* npm caching keeps CI execution efficient.
+* Deployment is handled through GitHub Actions.
+
+Workflow:
+
+```text
+.github/workflows/ci-cd.yml
+```
+
+---
+
+# 🌐 Deployment
+
+The project is configured for **GitHub Pages** deployment through the CI/CD workflow.
+
+### One-time setup
+
+1. Open the repository.
+2. Go to **Settings → Pages**.
+3. Select **GitHub Actions** as the deployment source.
+4. Push to `main`.
+5. GitHub Actions builds and deploys the application.
+
+The application will be available at:
+
+```text
+https://<username>.github.io/<repo-name>/
+```
+
+### Vite base path
+
+For project-based GitHub Pages deployments, configure the correct base path:
+
+```ts
+export default defineConfig({
+  base: "/REPO-NAME/",
+});
+```
+
+---
+
+# ⚙️ Environment Configuration
+
+When connecting the application to a backend or external services, environment variables should be stored in `.env`.
+
+**Never commit secrets to Git.**
+
+Example:
+
+```env
 VITE_API_BASE_URL=
 VITE_APP_NAME=CampusConnect
 ```
 
----
-
-## 🤝 Contributing
-
-1. Fork the repo
-2. Create a feature branch: `git checkout -b feature/your-feature`
-3. Commit your changes: `git commit -m "feat: add your feature"`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Open a Pull Request
-
-Please ensure `npm run build` and `npm run lint` pass before opening a PR — the CI pipeline will verify this automatically.
+A `.env.example` file should be maintained so contributors know which variables are required.
 
 ---
 
-## 🔒 Security
+# 🤝 Contributing
 
-Please see [`SECURITY.md`](SECURITY.md) for our security policy and how to report vulnerabilities responsibly.
+Contributions are welcome.
+
+### Workflow
+
+```bash
+# Create a feature branch
+git checkout -b feature/your-feature
+
+# Make your changes
+git add .
+
+# Commit
+git commit -m "feat: add your feature"
+
+# Push
+git push origin feature/your-feature
+```
+
+Then open a Pull Request.
+
+### Before submitting
+
+Make sure:
+
+```bash
+npm run lint
+npm run build
+```
+
+both pass successfully.
 
 ---
 
-## 📄 License
+# 🔒 Security
 
-This project is licensed under the **MIT License** — feel free to use, modify, and distribute with attribution.
+For security-related issues and responsible vulnerability disclosure, see:
+
+```text
+SECURITY.md
+```
+
+Please avoid publicly disclosing security vulnerabilities before they have been responsibly reported.
 
 ---
 
-<p align="center">Built with ❤️ for campus communities.</p>
+# 📄 License
+
+This project is licensed under the **MIT License**.
+
+You are free to use, modify, and distribute the project with appropriate attribution.
+
+---
+
+<div align="center">
+
+### Built for campus communities. 🎓
+
+**CampusConnect**
+
+*Connect · Discover · Participate*
+
+</div>
