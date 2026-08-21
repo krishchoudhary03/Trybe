@@ -22,7 +22,7 @@ Discover colleges, join clubs, explore events, share updates, discuss ideas, con
 
 ## ✦ Overview
 
-**CampusConnect** is a single-page application designed around the everyday needs of college students.
+**TryBe** is a single-page application designed around the everyday needs of college students.
 
 Instead of scattering campus life across WhatsApp groups, Instagram pages, college websites, and separate communities,TryBe brings the experience together through a unified platform.
 
@@ -63,7 +63,7 @@ The frontend follows a **context-driven, component-oriented React architecture**
 
 # 🏗️ Architecture
 
-CampusConnect uses a **layered SPA architecture**.
+TryBe uses a **layered SPA architecture**.
 
 At the center is `App.tsx`, which orchestrates routing and page composition, while `AppContext.tsx` provides shared application state.
 
@@ -102,10 +102,10 @@ At the center is `App.tsx`, which orchestrates routing and page composition, whi
        │    Global State     │              │   src/pages/*.tsx   │
        │                     │              │                     │
        │ • currentUser       │              │ • Home              │
-       │ • activeCollege     │              │ • Discover           │
-       │ • notifications     │              │ • Clubs              │
-       │ • messages          │              │ • Messages           │
-       │ • UI state          │              │ • Profile             │
+       │ • activeCollege     │              │ • Discover          │
+       │ • notifications     │              │ • Clubs             │
+       │ • messages          │              │ • Messages          │
+       │ • UI state          │              │ • Profile           │
        └──────────┬──────────┘              └──────────┬──────────┘
                   │                                    │
                   └────────────────┬───────────────────┘
@@ -191,7 +191,7 @@ This keeps mutation logic centralized and provides a predictable data flow witho
 
 # 🧱 Component Architecture
 
-CampusConnect follows a few simple architectural patterns.
+TryBe follows a few simple architectural patterns.
 
 ### Container + Tabs
 
@@ -400,7 +400,7 @@ http://localhost:5173
 
 # 🔄 CI/CD
 
-CampusConnect uses **GitHub Actions** to automate quality checks and deployment.
+TryBe uses **GitHub Actions** to automate quality checks and deployment.
 
 ```text
               Push / Pull Request
@@ -492,7 +492,7 @@ Example:
 
 ```env
 VITE_API_BASE_URL=
-VITE_APP_NAME=CampusConnect
+VITE_APP_NAME=TryBe
 ```
 
 A `.env.example` file should be maintained so contributors know which variables are required.
@@ -558,7 +558,7 @@ You are free to use, modify, and distribute the project with appropriate attribu
 
 ### Built for campus communities. 🎓
 
-**CampusConnect**
+**TryBe**
 
 *Connect · Discover · Participate*
 
