@@ -387,6 +387,55 @@ http://localhost:5173
 
 ---
 
+# ✦ AI Career Intelligence Layer
+
+TRYBE includes five connected career features that share one student profile:
+
+| Feature | Route | What it does |
+| :-- | :-- | :-- |
+| **Career Copilot** | `/career` | Next best action (what / why / how / time), this week's plan, top matches, structured Q&A |
+| **Career Readiness** | `/career/readiness` | Target role → skill gaps → explainable readiness score → actions that can be added to the roadmap |
+| **My Roadmap** | `/career/roadmap` | Phased plan that adapts to assessments, completed work and missed tasks |
+| **Opportunities** | `/career/opportunities` and the **Work → Opportunities for You** tab | Personalised match % with matched / missing skills, filters and sorting |
+| **Mentor Desk** | `/career/mentor` | One-glance student briefing, suggested agenda, session notes and AI summary |
+
+### How it is built
+
+```text
+UserProfile (+ career) ─┐
+Work projects ──────────┼─► StudentRecord ─► buildSnapshot() ─► Copilot · Readiness · Roadmap · Opportunities · Mentor
+Assessments / roadmap ──┘        (src/career/engine — pure, deterministic, unit-verified)
+                                                    │
+                                                    └─► src/ai — explains / words the result, never decides it
+```
+
+* **Numbers are never produced by an LLM.** Skill levels, readiness, roadmap structure, match % and the next-best-action are computed by `src/career/engine`. AI only writes explanations, coaching notes and mentor briefings.
+* **Every AI answer is validated** (`src/ai/validators.ts`): JSON-shape checked, length-limited, URLs stripped, unknown opportunity ids / skills / phase ids dropped. Invalid output falls back to the rules-based text and shows a friendly retry notice.
+* **No hallucinated opportunities.** Opportunities come only from `src/career/data/opportunities.ts` (clearly-labelled sample data) and existing TRYBE Work projects. The model receives real ids only and may reference nothing else.
+* **Works with zero configuration.** Without an AI key every feature still works using the built-in engine; results are labelled *TRYBE Insight* vs *AI Insight*.
+* **Existing data is reused.** Skills, interests and projects come from the existing profile / Work data; only career-specific fields live on `UserProfile.career`. Everything persists in the same `trybee_*` localStorage keys. No database was added.
+
+### Enabling AI explanations (optional)
+
+```bash
+cp .env.example .env.local
+# set GEMINI_API_KEY=...   (server-side only, no VITE_ prefix)
+npm run dev
+```
+
+The key is read by a small proxy (`server/aiProxy.ts`, a Vite plugin that reuses the existing `@google/genai` dependency) and is never bundled into browser code. The proxy validates input, caps request size, rate-limits per IP and returns only generic errors.
+
+> **Static hosting (GitHub Pages):** the production site has no server, so AI is reported as unavailable and the rules-based engine is used. To enable AI in production, host the proxy (or an equivalent endpoint with the same `GET /status` and `POST /` contract) elsewhere and set `VITE_AI_ENDPOINT` at build time. Do **not** put a secret in any `VITE_` variable.
+
+### Extending
+
+* Add a role: append to `src/career/data/roles.ts` (skills, targets, weights, phases).
+* Add a skill: append a playbook to `src/career/data/skills.ts` (tasks, review topics, aliases).
+* Sample opportunities and demo mentees: `src/career/data/`.
+* Skill checks are manual score entries (TRYBE has no assessment engine yet); the roadmap adapts to them.
+
+---
+
 # 📜 Available Scripts
 
 | Command           | Purpose                                |
@@ -395,6 +444,7 @@ http://localhost:5173
 | `npm run build`   | Type-check and create production build |
 | `npm run preview` | Preview the production build           |
 | `npm run lint`    | Run static analysis                    |
+| `npm run verify:career` | Verify the career engine and AI output guards |
 
 ---
 
@@ -493,6 +543,9 @@ Example:
 ```env
 VITE_API_BASE_URL=
 VITE_APP_NAME=TryBe
+
+# AI career layer (optional, server-side only — see "AI Career Intelligence Layer")
+GEMINI_API_KEY=
 ```
 
 A `.env.example` file should be maintained so contributors know which variables are required.

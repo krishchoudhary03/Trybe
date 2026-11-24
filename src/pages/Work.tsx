@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useApp } from '../context/AppContext';
 import type { Project } from '../data/types';
+import { OpportunitiesPanel } from '../components/career/OpportunitiesPanel';
 
 const TECH_OPTIONS = ['React', 'TypeScript', 'Python', 'Flutter', 'Firebase', 'Node.js', 'Figma', 'FastAPI', 'LangChain', 'Raspberry Pi'];
 const SKILL_OPTIONS = ['AI', 'UI/UX', 'Frontend', 'Backend', 'Mobile Development', 'Design', 'NLP', 'Machine Learning', 'Data Science'];
@@ -20,7 +21,7 @@ function timeAgo(iso: string): string {
 
 export default function Work() {
   const { projects, addProject, showToast, userProfile } = useApp();
-  const [activeTab, setActiveTab] = useState<'my_projects' | 'browse'>('my_projects');
+  const [activeTab, setActiveTab] = useState<'my_projects' | 'browse' | 'opportunities'>('my_projects');
 
   // Search + filter state (Browse tab)
   const [searchQuery, setSearchQuery] = useState('');
@@ -251,6 +252,14 @@ export default function Work() {
               }`}
             >
               Browse Projects
+            </button>
+            <button
+              onClick={() => setActiveTab('opportunities')}
+              className={`pb-2 px-2 font-label-md transition-all flex items-center gap-1 ${
+                activeTab === 'opportunities' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'
+              }`}
+            >
+              <span aria-hidden="true">✦</span> Opportunities for You
             </button>
           </div>
 
@@ -544,6 +553,9 @@ export default function Work() {
               )}
             </div>
           )}
+
+          {/* ── OPPORTUNITIES FOR YOU (AI career layer) ────────── */}
+          {activeTab === 'opportunities' && <OpportunitiesPanel embedded />}
         </div>
       </div>
     </div>

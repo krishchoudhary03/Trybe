@@ -28,6 +28,23 @@ export default function Layout() {
     return location.pathname.startsWith(path) ? '1' : '0';
   };
 
+  // Career section: '/career' (Copilot) must match exactly, the others by prefix.
+  const isCareerActive = (path: string, exact: boolean) =>
+    exact ? location.pathname === path : location.pathname.startsWith(path);
+
+  const getCareerNavClass = (path: string, exact: boolean) =>
+    isCareerActive(path, exact)
+      ? 'flex items-center gap-md px-md py-sm rounded-lg text-primary font-bold border-r-4 border-primary bg-secondary-container/10 hover:bg-surface-container-high transition-colors duration-200'
+      : 'flex items-center gap-md px-md py-sm rounded-lg text-on-surface-variant font-medium hover:bg-surface-container-high transition-colors duration-200';
+
+  const careerLinks = [
+    { to: '/career', label: 'Career Copilot', icon: 'auto_awesome', exact: true },
+    { to: '/career/readiness', label: 'Career Readiness', icon: 'query_stats', exact: false },
+    { to: '/career/roadmap', label: 'My Roadmap', icon: 'route', exact: false },
+    { to: '/career/opportunities', label: 'Opportunities', icon: 'bolt', exact: false },
+    { to: '/career/mentor', label: 'Mentor Desk', icon: 'supervisor_account', exact: false },
+  ];
+
   if (!isAuthenticated) {
     return <Outlet />;
   }
@@ -162,6 +179,27 @@ export default function Layout() {
               Work
             </span>
           </Link>
+
+
+          {/* Career */}
+          <div className="mt-md pt-4 border-t border-outline-variant/60 flex flex-col gap-sm" role="group" aria-label="Career">
+            <p className="px-md text-[11px] font-semibold uppercase tracking-widest text-on-surface-variant/70 flex items-center gap-1">
+              <span aria-hidden="true" className="text-primary">✦</span> Career
+            </p>
+            {careerLinks.map((l) => (
+              <Link key={l.to} className={getCareerNavClass(l.to, l.exact)} to={l.to}>
+                <span
+                  className="material-symbols-outlined text-xl"
+                  style={{
+                    fontVariationSettings: `"FILL" ${isCareerActive(l.to, l.exact) ? '1' : '0'}`,
+                  }}
+                >
+                  {l.icon}
+                </span>
+                <span className="font-label-md text-label-md">{l.label}</span>
+              </Link>
+            ))}
+          </div>
 
         </div>
 
@@ -464,6 +502,23 @@ export default function Layout() {
             }}
           >
             work
+          </span>
+        </Link>
+
+
+        {/* Career */}
+        <Link
+          className={`flex flex-col items-center gap-base hover:text-primary transition-colors p-xs ${location.pathname.startsWith('/career') ? 'text-primary' : 'text-on-surface-variant'}`}
+          to="/career"
+          aria-label="Career"
+        >
+          <span
+            className="material-symbols-outlined text-[22px]"
+            style={{
+              fontVariationSettings: `"FILL" ${getIconFill('/career')}`,
+            }}
+          >
+            auto_awesome
           </span>
         </Link>
 

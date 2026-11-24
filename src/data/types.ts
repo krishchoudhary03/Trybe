@@ -4,7 +4,7 @@
 
 export type ConnectionStatus = 'none' | 'pending' | 'connected';
 
-export type PostCategory = 'Campus Gossip' | 'Memes' | 'Ask Help' | 'Photos' | 'General' | 'Hot Takes' | 'Team Finding' | 'Projects' | 'Careers';
+export type PostCategory = 'Campus Gossip' | 'Memes' | 'Ask Help' | 'Photos' | 'Videos' | 'General' | 'Hot Takes' | 'Team Finding' | 'Projects' | 'Careers';
 
 export interface Notification {
   id: string;
@@ -104,6 +104,8 @@ export interface Post {
   clubId?: string;
   content: string;
   image?: string;
+  video?: string;
+  mediaType?: 'image' | 'video';
   tag: string;
   category?: PostCategory;
   likes: number;

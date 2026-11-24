@@ -2,12 +2,15 @@ import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import type { Post, PostCategory } from '../data/types';
+import { NextBestActionCard } from '../components/career/NextBestActionCard';
+import { mediaService } from '../services/mediaService';
 
-type PostMode = 'gossip' | 'meme' | 'question' | 'photo' | 'general';
+type PostMode = 'gossip' | 'meme' | 'question' | 'photo' | 'video' | 'general';
 
 export default function HomeFeed() {
   const location = useLocation();
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { 
     userProfile, 
@@ -24,7 +27,10 @@ export default function HomeFeed() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [newPostText, setNewPostText] = useState('');
   const [postMode, setPostMode] = useState<PostMode>('gossip');
-  const [attachedImage, setAttachedImage] = useState('');
+  const [attachedMedia, setAttachedMedia] = useState('');
+  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [uploadSource, setUploadSource] = useState<'supabase' | 'local' | null>(null);
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
 
@@ -35,8 +41,62 @@ export default function HomeFeed() {
     }
   }, [location]);
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith('video/');
+    const isImage = file.type.startsWith('image/');
+
+    if (!isImage && !isVideo) {
+      showToast('Please select an image or video file.');
+      return;
+    }
+
+    // Guard against excessively large files (>25MB)
+    if (file.size > 25 * 1024 * 1024) {
+      showToast('File size must be under 25MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result as string;
+      setAttachedMedia(base64);
+      const detectedType = isVideo ? 'video' : 'image';
+      setMediaType(detectedType);
+      if (detectedType === 'video' && postMode !== 'video') setPostMode('video');
+      if (detectedType === 'image' && postMode !== 'photo' && postMode !== 'meme') setPostMode('photo');
+
+      // Upload to Supabase Storage in the background
+      setIsUploadingMedia(true);
+      try {
+        const uploadRes = await mediaService.uploadPostMedia(file, base64, userProfile.id);
+        if (uploadRes.source === 'supabase') {
+          setAttachedMedia(uploadRes.publicUrl);
+          setUploadSource('supabase');
+          showToast(isVideo ? 'Video uploaded to Supabase Storage! 🚀' : 'Photo uploaded to Supabase Storage! 🚀');
+        } else {
+          setUploadSource('local');
+          showToast(isVideo ? 'Video attached (local preview)' : 'Photo attached (local preview)');
+        }
+      } catch {
+        setUploadSource('local');
+      } finally {
+        setIsUploadingMedia(false);
+      }
+    };
+    reader.onerror = () => {
+      showToast('Failed to read file.');
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
   const getPlaceholder = () => {
     switch (postMode) {
+      case 'video':
+        return "Describe the video or clip you are sharing...";
       case 'meme':
         return "Share a funny meme or image link...";
       case 'question':
@@ -53,11 +113,17 @@ export default function HomeFeed() {
 
   const handleCreatePost = (e?: FormEvent) => {
     if (e) e.preventDefault();
-    if (!newPostText.trim() && !attachedImage) return;
+    if (!newPostText.trim() && !attachedMedia) return;
+
+    const isVideo =
+      mediaType === 'video' ||
+      postMode === 'video' ||
+      (attachedMedia && (attachedMedia.includes('.mp4') || attachedMedia.includes('.webm') || attachedMedia.startsWith('data:video')));
 
     let tag = 'Campus Gossip';
     let category: PostCategory = 'Campus Gossip';
-    if (postMode === 'meme') { tag = 'Memes'; category = 'Memes'; }
+    if (isVideo) { tag = 'Videos'; category = 'Videos'; }
+    else if (postMode === 'meme') { tag = 'Memes'; category = 'Memes'; }
     else if (postMode === 'question') { tag = 'Ask Help'; category = 'Ask Help'; }
     else if (postMode === 'photo') { tag = 'Photos'; category = 'Photos'; }
     else if (postMode === 'general') { tag = 'General'; category = 'General'; }
@@ -72,7 +138,9 @@ export default function HomeFeed() {
       tag: tag,
       category: category,
       content: newPostText,
-      image: attachedImage ? attachedImage : undefined,
+      image: !isVideo && attachedMedia ? attachedMedia : undefined,
+      video: isVideo && attachedMedia ? attachedMedia : undefined,
+      mediaType: attachedMedia ? (isVideo ? 'video' : 'image') : undefined,
       likes: 0,
       liked: false,
       commentsCount: 0,
@@ -80,7 +148,10 @@ export default function HomeFeed() {
 
     addHomePost(newPost);
     setNewPostText('');
-    setAttachedImage('');
+    setAttachedMedia('');
+    setMediaType(null);
+    setIsUploadingMedia(false);
+    setUploadSource(null);
     setPostMode('gossip');
   };
 
@@ -114,8 +185,12 @@ export default function HomeFeed() {
   };
 
   const togglePostMode = (mode: PostMode) => {
-    setPostMode(current => current === mode ? 'gossip' : mode);
-    setAttachedImage('');
+    const nextMode = postMode === mode ? 'gossip' : mode;
+    setPostMode(nextMode);
+    if (nextMode !== 'photo' && nextMode !== 'meme' && nextMode !== 'video') {
+      setAttachedMedia('');
+      setMediaType(null);
+    }
   };
 
   const filteredPosts = activeFilter === 'All' 
@@ -134,6 +209,9 @@ export default function HomeFeed() {
           </div>
         </div>
 
+        {/* Career: next best action */}
+        <NextBestActionCard variant="compact" />
+
         {/* Create Post Card */}
         <form onSubmit={handleCreatePost} className="bg-surface border border-outline-variant rounded-xl p-md flex flex-col gap-md relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-br from-primary-container/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
@@ -149,34 +227,117 @@ export default function HomeFeed() {
                 type="text" 
               />
               
-              {(postMode === 'photo' || postMode === 'meme') && (
+              {/* Hidden file input for native device upload */}
+              <input 
+                ref={fileInputRef} 
+                type="file" 
+                accept={postMode === 'video' ? 'video/*' : 'image/*,video/*'} 
+                onChange={handleFileUpload} 
+                className="hidden" 
+              />
+
+              {(postMode === 'photo' || postMode === 'meme' || postMode === 'video' || attachedMedia) && (
                 <div className="flex flex-col gap-xs mt-xs">
-                  <div className="flex gap-xs items-center">
+                  <div className="flex gap-xs items-center flex-wrap sm:flex-nowrap">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex items-center gap-xs px-sm py-xs bg-surface-container-high hover:bg-surface-container-highest text-on-surface rounded-lg text-label-sm font-medium shrink-0 cursor-pointer transition-colors border border-outline-variant/60"
+                      title="Upload photo or video from your device"
+                    >
+                      <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                      <span>Upload {postMode === 'video' ? 'Video' : 'File'}</span>
+                    </button>
+
                     <input 
                       type="text" 
-                      placeholder="Paste image URL here..." 
-                      value={attachedImage} 
-                      onChange={(e) => setAttachedImage(e.target.value)} 
-                      className="flex-1 bg-surface-container-low border border-outline-variant rounded-lg px-md py-xs text-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
+                      placeholder={postMode === 'video' ? "Paste video URL (MP4, WebM) or click Upload..." : "Paste image URL or click Upload..."} 
+                      value={attachedMedia} 
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setAttachedMedia(val);
+                        const lower = val.toLowerCase();
+                        if (lower.includes('.mp4') || lower.includes('.webm') || lower.includes('youtube') || lower.includes('vimeo')) {
+                          setMediaType('video');
+                        } else if (val) {
+                          setMediaType('image');
+                        }
+                      }} 
+                      className="flex-1 min-w-[200px] bg-surface-container-low border border-outline-variant rounded-lg px-md py-xs text-body-sm text-on-surface focus:outline-none focus:border-primary-container focus:ring-1 focus:ring-primary-container"
                     />
-                    <button 
-                      type="button"
-                      onClick={() => setAttachedImage('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80')}
-                      className="text-primary text-label-sm font-semibold hover:underline shrink-0 bg-surface-container-high px-sm py-xs rounded-lg cursor-pointer"
-                    >
-                      Sample Image
-                    </button>
-                  </div>
-                  {attachedImage && (
-                    <div className="relative w-28 h-20 rounded overflow-hidden border border-outline-variant mt-xs">
-                      <img src={attachedImage} className="w-full h-full object-cover" alt="Attached preview" />
+
+                    {postMode === 'video' ? (
                       <button 
-                        type="button" 
-                        onClick={() => setAttachedImage('')}
-                        className="absolute top-1 right-1 bg-background/80 hover:bg-background text-on-surface rounded-full p-[2px] flex items-center justify-center cursor-pointer"
+                        type="button"
+                        onClick={() => {
+                          setAttachedMedia('https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4');
+                          setMediaType('video');
+                        }}
+                        className="text-primary text-label-sm font-semibold hover:underline shrink-0 bg-surface-container-high px-sm py-xs rounded-lg cursor-pointer"
                       >
-                        <span className="material-symbols-outlined text-xs">close</span>
+                        Sample Video
                       </button>
+                    ) : (
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setAttachedMedia('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=600&q=80');
+                          setMediaType('image');
+                        }}
+                        className="text-primary text-label-sm font-semibold hover:underline shrink-0 bg-surface-container-high px-sm py-xs rounded-lg cursor-pointer"
+                      >
+                        Sample Image
+                      </button>
+                    )}
+                  </div>
+
+                  {attachedMedia && (
+                    <div className="mt-xs flex flex-col gap-xs">
+                      {mediaType === 'video' || attachedMedia.includes('.mp4') || attachedMedia.includes('.webm') || attachedMedia.startsWith('data:video') ? (
+                        <div className="relative w-full max-w-sm rounded-lg overflow-hidden border border-outline-variant bg-black">
+                          <video 
+                            src={attachedMedia} 
+                            controls 
+                            playsInline 
+                            className="w-full max-h-48 object-contain" 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => { setAttachedMedia(''); setMediaType(null); setUploadSource(null); }}
+                            className="absolute top-2 right-2 bg-background/80 hover:bg-background text-on-surface rounded-full p-1 flex items-center justify-center cursor-pointer shadow"
+                            title="Remove video"
+                          >
+                            <span className="material-symbols-outlined text-xs">close</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="relative w-28 h-20 rounded overflow-hidden border border-outline-variant">
+                          <img src={attachedMedia} className="w-full h-full object-cover" alt="Attached preview" />
+                          <button 
+                            type="button" 
+                            onClick={() => { setAttachedMedia(''); setMediaType(null); setUploadSource(null); }}
+                            className="absolute top-1 right-1 bg-background/80 hover:bg-background text-on-surface rounded-full p-[2px] flex items-center justify-center cursor-pointer shadow"
+                            title="Remove image"
+                          >
+                            <span className="material-symbols-outlined text-xs">close</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Storage Status indicator */}
+                      <div className="flex items-center gap-xs text-[11px]">
+                        {isUploadingMedia ? (
+                          <span className="flex items-center gap-xs text-primary font-medium animate-pulse">
+                            <span className="material-symbols-outlined text-xs animate-spin">progress_activity</span>
+                            Uploading to Supabase Storage...
+                          </span>
+                        ) : uploadSource === 'supabase' || attachedMedia.includes('supabase.co') ? (
+                          <span className="flex items-center gap-xs text-green-400 font-medium">
+                            <span className="material-symbols-outlined text-xs">cloud_done</span>
+                            Saved in Supabase Storage (post-media)
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -221,6 +382,15 @@ export default function HomeFeed() {
                 <span className="material-symbols-outlined text-[18px]">photo_camera</span>
                 <span className="hidden sm:inline">Photo</span>
               </button>
+
+              <button 
+                type="button" 
+                onClick={() => togglePostMode('video')}
+                className={`flex items-center gap-xs px-sm py-xs rounded-full transition-colors text-label-sm cursor-pointer ${postMode === 'video' ? 'bg-[#C85C68]/20 text-[#ffb2b9] border border-[#C85C68]/30 font-bold' : 'hover:bg-surface-container-high hover:text-primary'}`}
+              >
+                <span className="material-symbols-outlined text-[18px]">videocam</span>
+                <span className="hidden sm:inline">Video</span>
+              </button>
             </div>
             <button type="submit" className="bg-primary-container text-on-primary-container px-lg py-xs rounded-full font-label-md hover:bg-primary hover:text-on-primary transition-all glow-accent cursor-pointer">Post</button>
           </div>
@@ -235,7 +405,8 @@ export default function HomeFeed() {
             { label: 'Hot Takes', emoji: '🔥' },
             { label: 'Ask Help', emoji: '❓' },
             { label: 'Team Finding', emoji: '🤝' },
-            { label: 'Photos', emoji: '📸' }
+            { label: 'Photos', emoji: '📸' },
+            { label: 'Videos', emoji: '🎥' }
           ].map((filter) => (
             <button 
               key={filter.label}
@@ -263,6 +434,13 @@ export default function HomeFeed() {
               const isLiked = likedPosts.has(post.id) || post.liked;
               const postComments = comments[post.id] || [];
               const isCommentsOpen = !!openComments[post.id];
+
+              const hasVideo = Boolean(
+                post.video ||
+                post.mediaType === 'video' ||
+                (post.image && (post.image.includes('.mp4') || post.image.includes('.webm') || post.image.startsWith('data:video')))
+              );
+              const videoSrc = post.video || post.image;
 
               return (
                 <article 
@@ -292,11 +470,22 @@ export default function HomeFeed() {
                     <p>{post.content}</p>
                   </div>
 
-                  {post.image && (
+                  {/* Media rendering (Video or Image) */}
+                  {hasVideo && videoSrc ? (
+                    <div className="rounded-lg overflow-hidden border border-outline-variant/50 max-h-[460px] w-full bg-black flex items-center justify-center">
+                      <video 
+                        src={videoSrc} 
+                        controls 
+                        playsInline 
+                        preload="metadata"
+                        className="w-full max-h-[460px] object-contain rounded-lg" 
+                      />
+                    </div>
+                  ) : post.image ? (
                     <div className="rounded-lg overflow-hidden border border-outline-variant/50 max-h-96 w-full bg-surface-container-low flex items-center justify-center">
                       <img src={post.image} className="w-full h-full object-cover" alt="Post attachment" />
                     </div>
-                  )}
+                  ) : null}
 
                   {/* Action Buttons */}
                   <div className="flex items-center gap-lg pt-sm border-t border-outline-variant/50 text-on-surface-variant text-label-sm">

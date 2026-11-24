@@ -39,6 +39,15 @@ import LegalPage from './pages/LegalPage';
 import Contact from './pages/Contact';
 
 import { AppProvider, useApp } from './context/AppContext';
+import { CareerProvider } from './context/CareerContext';
+import { CareerModalsProvider } from './components/career/CareerModals';
+
+// Career intelligence layer
+import CareerCopilot from './pages/career/CareerCopilot';
+import CareerReadiness from './pages/career/CareerReadiness';
+import CareerRoadmap from './pages/career/CareerRoadmap';
+import Opportunities from './pages/career/Opportunities';
+import MentorDashboard from './pages/career/MentorDashboard';
 
 
 // ============================================================
@@ -82,6 +91,8 @@ function PublicAuthRoute({
 export default function App() {
   return (
     <AppProvider>
+      <CareerProvider>
+      <CareerModalsProvider>
       <Router>
         <Routes>
 
@@ -192,6 +203,36 @@ export default function App() {
 
 
             {/* ==================================================
+                CAREER INTELLIGENCE
+            ================================================== */}
+
+            <Route
+              path="/career"
+              element={<CareerCopilot />}
+            />
+
+            <Route
+              path="/career/readiness"
+              element={<CareerReadiness />}
+            />
+
+            <Route
+              path="/career/roadmap"
+              element={<CareerRoadmap />}
+            />
+
+            <Route
+              path="/career/opportunities"
+              element={<Opportunities />}
+            />
+
+            <Route
+              path="/career/mentor"
+              element={<MentorDashboard />}
+            />
+
+
+            {/* ==================================================
                 MESSAGES / CHAT
             ================================================== */}
 
@@ -244,6 +285,8 @@ export default function App() {
 
         </Routes>
       </Router>
+      </CareerModalsProvider>
+      </CareerProvider>
     </AppProvider>
   );
 }

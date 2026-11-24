@@ -8,12 +8,15 @@ import {
 } from 'react';
 import type { Post, Comment, Project, ConnectionStatus, Notification } from '../data/types';
 import { INITIAL_PROJECTS } from '../data/projects';
+import type { CareerProfile } from '../career/types';
+import { supabase } from '../lib/supabase';
 
-// ─────────────────────────────────────────
+// ----------------------------------------------------------------------------
 // Types
-// ─────────────────────────────────────────
+// ----------------------------------------------------------------------------
 
 export interface UserProfile {
+  id?: string;
   name: string;
   username: string;
   bio: string;
@@ -23,6 +26,8 @@ export interface UserProfile {
   joinedDate: string;
   skills: string[];
   interests: string[];
+  /** Career-specific data (target role, skill ratings, preferences). See src/career. */
+  career?: CareerProfile;
 }
 
 export interface ToastMessage {
@@ -51,7 +56,7 @@ interface AppState {
 const DEFAULT_PROFILE: UserProfile = {
   name: 'Kavya Rajput',
   username: 'kvya.x_x',
-  bio: 'Building things that matter. Exploring the intersection of design, technology, and community. Always down for a coffee chat. ☕️',
+  bio: 'Building things that matter. Exploring the intersection of design, technology, and community. Always down for a coffee chat. ☕✨',
   location: 'Mathura, India',
   avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCZWZ6hXOz2o4IibLgz9AtdxXjPUPiNFEJyqza76VKCXd6EarCFBjmLwqJgrFk3dLIwrZxuLyaAeLRf21F4oWlwnn8Z7wyA91tJ4M5R4KoRyq_V6NEmzRYisnXpr3PlVqgFxoecgga1cxgXrCY46RDc_VlzbXejWyRlIQCPCm3oQOGB_vy6rfMwfjOdZn4nw47ClxfDPXvATwEYekYZshmpLmsvHoUfP7qfREcHBKgLg26vmr_BBLFQ',
   college: 'GLA University',
@@ -70,7 +75,7 @@ const INITIAL_HOME_POSTS: Post[] = [
     createdAt: '15m ago',
     tag: 'Memes',
     category: 'Memes',
-    content: 'Me trying to explain to the professor why my code works on my machine but not on the server during the demo. 🤡',
+    content: 'Me trying to explain to the professor why my code works on my machine but not on the server during the demo. 😭💀',
     image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?auto=format&fit=crop&w=800&q=80',
     likes: 412,
     liked: false,
@@ -101,7 +106,7 @@ const INITIAL_HOME_POSTS: Post[] = [
     createdAt: '3h ago',
     tag: 'Hot Takes',
     category: 'Hot Takes',
-    content: "Hot Take: The canteen's coffee is actually just hot bean water. Change my mind. ☕️💀",
+    content: "Hot Take: The canteen's coffee is actually just hot bean water. Change my mind. ☕🤡",
     likes: 1200,
     liked: true,
     isHotTake: true,
@@ -117,7 +122,7 @@ const INITIAL_COMMENTS: Record<string, Comment[]> = {
       authorId: 'vikram-a',
       authorName: 'Vikram A.',
       authorAvatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDUXnEH6lKCl6QUFpBOnBCol61TGevdyhB3nbEyqlVaTugoGuGMl303b0fVqFJjhFfu63S_go__AvgbdT-it_fE-1hAV6bz1rrpLB4XbSx4WM9HoFTPDfVm21YfLOFdHN4y9pCRTgbpjaLzL37L0T4ZqalyT2HVDOGxH6LlhGG3KJ6Z8TY-jHonoYZRYiOfmqIASAvp_7nh_vauzHupg6jruXquZTVbYZWfSYINwK_pw1uFDfJnXYBd',
-      text: 'Classic student experience, bro! 💀',
+      text: 'Classic student experience, bro! 😭',
       createdAt: '10m ago'
     },
     {
@@ -191,9 +196,9 @@ interface AppContextValue extends AppState {
   clearNotifications: () => void;
 }
 
-// ─────────────────────────────────────────
-// Helpers: localStorage persistence
-// ─────────────────────────────────────────
+// ----------------------------------------------------------------------------
+// Helpers: localStorage persistence & fallback
+// ----------------------------------------------------------------------------
 
 function loadFromStorage<T>(key: string, fallback: T): T {
   try {
@@ -213,15 +218,15 @@ function saveToStorage<T>(key: string, value: T): void {
   }
 }
 
-// ─────────────────────────────────────────
+// ----------------------------------------------------------------------------
 // Context
-// ─────────────────────────────────────────
+// ----------------------------------------------------------------------------
 
 const AppContext = createContext<AppContextValue | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    () => loadFromStorage<boolean>('auth', true) // Default true for demo/MVP smoothness, persisted
+    () => loadFromStorage<boolean>('auth', true)
   );
 
   const [joinedClubs, setJoinedClubs] = useState<Set<string>>(
@@ -284,7 +289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const [toast, setToast] = useState<ToastMessage | null>(null);
 
-  // ── Toast Helper ──
+  // Toast Helper
   const showToast = useCallback((message: string, type: 'success' | 'info' | 'error' = 'success') => {
     const id = Date.now().toString();
     setToast({ id, message, type });
@@ -293,63 +298,125 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }, 3000);
   }, []);
 
-  // ── Persist to localStorage ──
+  // Sync to Supabase in Background + Sync to localStorage for Offline Cache
   useEffect(() => {
     saveToStorage('auth', isAuthenticated);
-  }, [isAuthenticated]);
-
-  useEffect(() => {
     saveToStorage('joinedClubs', Array.from(joinedClubs));
-  }, [joinedClubs]);
-
-  useEffect(() => {
     saveToStorage('rsvpdEvents', Array.from(rsvpdEvents));
-  }, [rsvpdEvents]);
-
-  useEffect(() => {
     saveToStorage('interestedEvents', Array.from(interestedEvents));
-  }, [interestedEvents]);
-
-  useEffect(() => {
     saveToStorage('collegePosts', collegePosts);
-  }, [collegePosts]);
-
-  useEffect(() => {
     saveToStorage('clubPosts', clubPosts);
-  }, [clubPosts]);
-
-  useEffect(() => {
     saveToStorage('homePosts', homePosts);
-  }, [homePosts]);
-
-  useEffect(() => {
-    const ownProjects = projects.filter(p => p.isOwn);
-    saveToStorage('projects', ownProjects);
-  }, [projects]);
-
-  useEffect(() => {
+    saveToStorage('projects', projects.filter(p => p.isOwn));
     saveToStorage('comments', comments);
-  }, [comments]);
-
-  useEffect(() => {
     saveToStorage('likedPosts', Array.from(likedPosts));
-  }, [likedPosts]);
-
-  useEffect(() => {
     saveToStorage('connections', connections);
-  }, [connections]);
-
-  useEffect(() => {
     saveToStorage('notifications', notifications);
-  }, [notifications]);
-
-  useEffect(() => {
     saveToStorage('userProfile', userProfile);
-  }, [userProfile]);
+  }, [
+    isAuthenticated,
+    joinedClubs,
+    rsvpdEvents,
+    interestedEvents,
+    collegePosts,
+    clubPosts,
+    homePosts,
+    projects,
+    comments,
+    likedPosts,
+    connections,
+    notifications,
+    userProfile,
+  ]);
 
-  // ── Auth Actions ────────────────────────────────────────────
+  // Supabase Auth Listener & Live Data Hydration
+  useEffect(() => {
+    const checkSupabaseSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          setIsAuthenticated(true);
 
-  const login = useCallback((email?: string, name?: string) => {
+          // Fetch user profile from Supabase
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+          if (profile) {
+            setUserProfile(prev => ({
+              ...prev,
+              id: profile.id,
+              name: profile.display_name || prev.name,
+              username: profile.username || prev.username,
+              bio: profile.bio || prev.bio,
+              avatar: profile.avatar_url || prev.avatar,
+            }));
+          }
+
+          // Fetch posts from Supabase posts table
+          const { data: dbPosts } = await supabase
+            .from('posts')
+            .select(`
+              id,
+              content,
+              reactions_count,
+              comments_count,
+              created_at,
+              author:profiles!posts_author_id_fkey(display_name, username, avatar_url)
+            `)
+            .eq('status', 'published')
+            .is('deleted_at', null)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+          if (dbPosts && dbPosts.length > 0) {
+            const mappedPosts: Post[] = dbPosts.map(p => ({
+              id: p.id,
+              authorId: (p.author as unknown as { username: string })?.username || 'user',
+              authorName: (p.author as unknown as { display_name: string })?.display_name || 'Anonymous',
+              authorAvatar: (p.author as unknown as { avatar_url: string })?.avatar_url || DEFAULT_PROFILE.avatar,
+              createdAt: 'Recently',
+              tag: 'General',
+              category: 'General',
+              content: p.content || '',
+              likes: p.reactions_count || 0,
+              liked: false,
+              commentsCount: p.comments_count || 0,
+            }));
+
+            setHomePosts(prev => {
+              const combined = [...mappedPosts, ...prev];
+              const seen = new Set();
+              return combined.filter(item => {
+                if (seen.has(item.id)) return false;
+                seen.add(item.id);
+                return true;
+              });
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Supabase session initialization note:', err);
+      }
+    };
+
+    checkSupabaseSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsAuthenticated(true);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Auth Actions
+  const login = useCallback(async (email?: string, name?: string) => {
     setIsAuthenticated(true);
     if (name || email) {
       setUserProfile(prev => ({
@@ -361,7 +428,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showToast(`Welcome back, ${name || userProfile.name}!`);
   }, [showToast, userProfile.name]);
 
-  const signup = useCallback((name: string, email: string) => {
+  const signup = useCallback(async (name: string, email: string) => {
     setIsAuthenticated(true);
     setUserProfile(prev => ({
       ...prev,
@@ -371,16 +438,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showToast(`Account created successfully! Welcome to TRYBE.`);
   }, [showToast]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     setIsAuthenticated(false);
+    await supabase.auth.signOut().catch(() => null);
     showToast('Logged out successfully.', 'info');
   }, [showToast]);
 
-  // ── Club & Event Actions ───────────────────────────────────
-
+  // Club & Event Actions (Optimistic UI + Background Supabase Sync)
   const joinClub = useCallback((clubId: string) => {
     setJoinedClubs(prev => new Set(prev).add(clubId));
     showToast('Joined club successfully!');
+
+    // Async sync with Supabase
+    supabase.rpc('join_club', { p_club_id: clubId }).catch(() => null);
   }, [showToast]);
 
   const leaveClub = useCallback((clubId: string) => {
@@ -390,11 +460,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next;
     });
     showToast('Left club.', 'info');
+
+    // Async sync with Supabase
+    supabase.rpc('leave_club', { p_club_id: clubId }).catch(() => null);
   }, [showToast]);
 
   const rsvpEvent = useCallback((eventId: string) => {
     setRsvpdEvents(prev => new Set(prev).add(eventId));
     showToast('RSVP confirmed! Added to your schedule.');
+
+    // Async sync with Supabase
+    supabase.rpc('rsvp_event', { p_event_id: eventId, p_status: 'going' }).catch(() => null);
   }, [showToast]);
 
   const cancelRsvp = useCallback((eventId: string) => {
@@ -404,6 +480,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next;
     });
     showToast('RSVP cancelled.', 'info');
+
+    // Async sync with Supabase
+    supabase.rpc('cancel_rsvp', { p_event_id: eventId }).catch(() => null);
   }, [showToast]);
 
   const markInterested = useCallback((eventId: string) => {
@@ -419,8 +498,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // ── Posts Actions ──────────────────────────────────────────
-
+  // Post Actions (Optimistic UI + Background Supabase Sync)
   const addCollegePost = useCallback((collegeId: string, post: Post) => {
     setCollegePosts(prev => ({
       ...prev,
@@ -437,40 +515,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     showToast('Post published to club feed!');
   }, [showToast]);
 
-  const addHomePost = useCallback((post: Post) => {
+  const addHomePost = useCallback(async (post: Post) => {
     setHomePosts(prev => [post, ...prev]);
     showToast('Post created successfully!');
+
+    // Async sync with Supabase
+    const { data: user } = await supabase.auth.getUser();
+    if (user?.user) {
+      await supabase.from('posts').insert({
+        author_id: user.user.id,
+        content: post.content,
+        visibility: 'public',
+      }).catch(console.error);
+    }
   }, [showToast]);
 
   const likePost = useCallback((postId: string) => {
     setLikedPosts(prev => {
-      if (prev.has(postId)) return prev; // Idempotent check
-      return new Set(prev).add(postId);
+      if (prev.has(postId)) return prev;
+      const next = new Set(prev);
+      next.add(postId);
+      return next;
     });
 
     setHomePosts(prev => prev.map(p =>
       p.id === postId && !p.liked ? { ...p, likes: p.likes + 1, liked: true } : p
     ));
 
-    setCollegePosts(prev => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = next[key].map(p =>
-          p.id === postId && !p.liked ? { ...p, likes: p.likes + 1, liked: true } : p
-        );
-      }
-      return next;
-    });
-
-    setClubPosts(prev => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = next[key].map(p =>
-          p.id === postId && !p.liked ? { ...p, likes: p.likes + 1, liked: true } : p
-        );
-      }
-      return next;
-    });
+    // Sync reaction to Supabase atomically
+    supabase.rpc('toggle_post_reaction', { p_post_id: postId, p_reaction: 'like' }).catch(() => null);
   }, []);
 
   const unlikePost = useCallback((postId: string) => {
@@ -484,25 +557,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       p.id === postId && p.liked ? { ...p, likes: Math.max(0, p.likes - 1), liked: false } : p
     ));
 
-    setCollegePosts(prev => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = next[key].map(p =>
-          p.id === postId && p.liked ? { ...p, likes: Math.max(0, p.likes - 1), liked: false } : p
-        );
-      }
-      return next;
-    });
-
-    setClubPosts(prev => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = next[key].map(p =>
-          p.id === postId && p.liked ? { ...p, likes: Math.max(0, p.likes - 1), liked: false } : p
-        );
-      }
-      return next;
-    });
+    // Sync reaction to Supabase atomically
+    supabase.rpc('toggle_post_reaction', { p_post_id: postId, p_reaction: 'like' }).catch(() => null);
   }, []);
 
   const addComment = useCallback((postId: string, comment: Comment) => {
@@ -515,35 +571,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
     ));
 
-    setCollegePosts(prev => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = next[key].map(p =>
-          p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
-        );
-      }
-      return next;
-    });
-
-    setClubPosts(prev => {
-      const next = { ...prev };
-      for (const key of Object.keys(next)) {
-        next[key] = next[key].map(p =>
-          p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p
-        );
-      }
-      return next;
-    });
-
     showToast('Comment added!');
+
+    // Async sync with Supabase
+    supabase.rpc('add_comment', { p_post_id: postId, p_content: comment.text }).catch(() => null);
   }, [showToast]);
 
-  const addProject = useCallback((project: Project) => {
+  const addProject = useCallback(async (project: Project) => {
     setProjects(prev => [project, ...prev]);
     showToast('Project posted successfully!');
-  }, [showToast]);
 
-  // ── Connection Actions ──────────────────────────────────────
+    const { data: user } = await supabase.auth.getUser();
+    if (user?.user) {
+      await supabase.from('projects').insert({
+        owner_id: user.user.id,
+        title: project.title,
+        description: project.description,
+      }).catch(console.error);
+    }
+  }, [showToast]);
 
   const setConnectionStatus = useCallback((personId: string, status: ConnectionStatus) => {
     setConnections(prev => ({ ...prev, [personId]: status }));
@@ -563,10 +609,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [joinedClubs]
   );
 
-  const updateUserProfile = useCallback((updates: Partial<UserProfile>, silent = false) => {
+  const updateUserProfile = useCallback(async (updates: Partial<UserProfile>, silent = false) => {
     setUserProfile(prev => ({ ...prev, ...updates }));
     if (!silent) {
       showToast('Profile updated successfully!');
+    }
+
+    const { data: user } = await supabase.auth.getUser();
+    if (user?.user) {
+      await supabase.from('profiles').update({
+        display_name: updates.name,
+        bio: updates.bio,
+        avatar_url: updates.avatar,
+      }).eq('id', user.user.id).catch(() => null);
     }
   }, [showToast]);
 
