@@ -4,10 +4,11 @@ import path from 'path';
 import { defineConfig } from 'vite';
 import { trybeAiProxy } from './server/aiProxy';
 import { trybeMediaProxy } from './server/mediaProxy';
+import { trybePostProxy } from './server/postProxy';
 
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), trybeAiProxy(), trybeMediaProxy()],
+    plugins: [react(), tailwindcss(), trybeAiProxy(), trybeMediaProxy(), trybePostProxy()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

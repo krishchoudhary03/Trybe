@@ -10,6 +10,7 @@ import type { Post, Comment, Project, ConnectionStatus, Notification } from '../
 import { INITIAL_PROJECTS } from '../data/projects';
 import type { CareerProfile } from '../career/types';
 import { supabase } from '../lib/supabase';
+import { postService } from '../services/postService';
 
 // ----------------------------------------------------------------------------
 // Types
@@ -331,6 +332,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Supabase Auth Listener & Live Data Hydration
   useEffect(() => {
+    // 1. Synchronize posts from Supabase for all users (authenticated & guests)
+    const syncPostsFromDatabase = async () => {
+      try {
+        const dbPosts = await postService.fetchHomeFeed();
+        if (dbPosts && dbPosts.length > 0) {
+          setHomePosts(prev => {
+            const dbIds = new Set(dbPosts.map(p => p.id));
+            const localOnly = prev.filter(p => !dbIds.has(p.id));
+            return [...dbPosts, ...localOnly];
+          });
+        }
+      } catch (err) {
+        console.warn('[AppContext] Post synchronization note:', err);
+      }
+    };
+
+    // Initial sync
+    void syncPostsFromDatabase();
+
+    // Periodic sync every 8 seconds so other users' posts appear automatically
+    const syncInterval = setInterval(syncPostsFromDatabase, 8000);
+
+    // 2. Check Supabase auth session
     const checkSupabaseSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
@@ -354,63 +378,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
               avatar: profile.avatar_url || prev.avatar,
             }));
           }
-
-          // Fetch posts from Supabase posts table
-          const { data: dbPosts } = await supabase
-            .from('posts')
-            .select(`
-              id,
-              content,
-              reactions_count,
-              comments_count,
-              created_at,
-              author:profiles!posts_author_id_fkey(display_name, username, avatar_url)
-            `)
-            .eq('status', 'published')
-            .is('deleted_at', null)
-            .order('created_at', { ascending: false })
-            .limit(20);
-
-          if (dbPosts && dbPosts.length > 0) {
-            const mappedPosts: Post[] = dbPosts.map(p => ({
-              id: p.id,
-              authorId: (p.author as unknown as { username: string })?.username || 'user',
-              authorName: (p.author as unknown as { display_name: string })?.display_name || 'Anonymous',
-              authorAvatar: (p.author as unknown as { avatar_url: string })?.avatar_url || DEFAULT_PROFILE.avatar,
-              createdAt: 'Recently',
-              tag: 'General',
-              category: 'General',
-              content: p.content || '',
-              likes: p.reactions_count || 0,
-              liked: false,
-              commentsCount: p.comments_count || 0,
-            }));
-
-            setHomePosts(prev => {
-              const combined = [...mappedPosts, ...prev];
-              const seen = new Set();
-              return combined.filter(item => {
-                if (seen.has(item.id)) return false;
-                seen.add(item.id);
-                return true;
-              });
-            });
-          }
         }
       } catch (err) {
         console.warn('Supabase session initialization note:', err);
       }
     };
 
-    checkSupabaseSession();
+    void checkSupabaseSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setIsAuthenticated(true);
+        void checkSupabaseSession();
       }
+      void syncPostsFromDatabase();
     });
 
     return () => {
+      clearInterval(syncInterval);
       subscription.unsubscribe();
     };
   }, []);
@@ -516,17 +501,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [showToast]);
 
   const addHomePost = useCallback(async (post: Post) => {
+    // 1. Optimistic update so user sees their post in 0ms
     setHomePosts(prev => [post, ...prev]);
     showToast('Post created successfully!');
 
-    // Async sync with Supabase
-    const { data: user } = await supabase.auth.getUser();
-    if (user?.user) {
-      await supabase.from('posts').insert({
-        author_id: user.user.id,
-        content: post.content,
-        visibility: 'public',
-      }).catch(console.error);
+    // 2. Persist to Supabase database (with author, tags, and media)
+    try {
+      const saved = await postService.publishPost(post);
+      if (saved) {
+        setHomePosts(prev => prev.map(p => (p.id === post.id ? saved : p)));
+      }
+    } catch (err) {
+      console.warn('[AppContext] Failed to sync post to Supabase:', err);
     }
   }, [showToast]);
 

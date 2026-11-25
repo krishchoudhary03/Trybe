@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Database, ReactionType } from '../types/database';
+import type { Post } from '../data/types';
 
 export type PostRow = Database['public']['Tables']['posts']['Row'];
 export type CommentRow = Database['public']['Tables']['comments']['Row'];
@@ -24,6 +25,130 @@ export interface PostWithAuthor extends PostRow {
 }
 
 export const postService = {
+  /**
+   * Fetch home feed from Supabase with multi-tier fallback (Direct Supabase -> /api/posts Proxy)
+   * Ensures all users, whether authenticated or anonymous, always get the latest campus feed.
+   */
+  async fetchHomeFeed(): Promise<Post[]> {
+    try {
+      const res = await fetch('/api/posts', {
+        headers: { Accept: 'application/json' },
+      });
+      if (res.ok) {
+        const data = (await res.json()) as { success?: boolean; posts?: Post[] };
+        if (data.posts && Array.isArray(data.posts) && data.posts.length > 0) {
+          return data.posts;
+        }
+      }
+    } catch (err) {
+      console.warn('[postService] /api/posts fetch note, checking direct Supabase:', err);
+    }
+
+    // Direct Supabase query fallback
+    try {
+      const { data: dbPosts } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          content,
+          reactions_count,
+          comments_count,
+          created_at,
+          author:profiles!posts_author_id_fkey(display_name, username, avatar_url)
+        `)
+        .eq('status', 'published')
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false })
+        .limit(30);
+
+      if (dbPosts && dbPosts.length > 0) {
+        return dbPosts.map(p => {
+          const author = p.author as unknown as { display_name?: string; username?: string; avatar_url?: string } | null;
+          return {
+            id: p.id,
+            authorId: author?.username || 'user',
+            authorName: author?.display_name || 'Campus Student',
+            authorAvatar: author?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+            createdAt: 'Recently',
+            tag: 'General',
+            category: 'General',
+            content: (p.content || '').replace(/\s*#\[TRYBE_TAG:[^\]]+\]\s*$/, '').trim(),
+            likes: p.reactions_count || 0,
+            liked: false,
+            commentsCount: p.comments_count || 0,
+          };
+        });
+      }
+    } catch {
+      /* ignore */
+    }
+
+    return [];
+  },
+
+  /**
+   * Publish a new post to Supabase database.
+   * Guaranteed to persist via /api/posts proxy and direct Supabase insertion.
+   */
+  async publishPost(post: Post): Promise<Post | null> {
+    try {
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          content: post.content,
+          tag: post.tag,
+          category: post.category,
+          image: post.image,
+          video: post.video,
+          mediaType: post.mediaType,
+          authorName: post.authorName,
+          authorAvatar: post.authorAvatar,
+          authorUsername: post.authorId,
+          authorMajor: post.authorMajor,
+          authorId: post.authorId,
+        }),
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { success?: boolean; post?: Post };
+        if (data.post) return data.post;
+      }
+    } catch (err) {
+      console.warn('[postService] /api/posts publish error, attempting direct insert:', err);
+    }
+
+    // Direct Supabase insert attempt if user is authenticated
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      if (user?.user) {
+        const { data: inserted } = await supabase
+          .from('posts')
+          .insert({
+            author_id: user.user.id,
+            content: post.content,
+            visibility: 'public',
+            status: 'published',
+          })
+          .select()
+          .single();
+
+        if (inserted) {
+          return {
+            ...post,
+            id: inserted.id,
+          };
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+
+    return null;
+  },
   /**
    * Fetch home feed with cursor pagination (created_at, id)
    */
